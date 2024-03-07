@@ -42,3 +42,6 @@ class KitchenDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.food_data[idx], self.assignments[idx]
+
+    def get_food_means(self):
+        return self.food_means
