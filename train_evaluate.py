@@ -3,12 +3,9 @@ import datetime
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.nn import Module
 import torch.optim as optimizers
 from torch.utils.data import DataLoader, Dataset
 import torch.nn.functional as F
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
 
 import matplotlib.pyplot as plt
 from tqdm import tqdm
