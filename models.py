@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 class SimpleMLP(Module):
     def __init__(self, num_kitchens: int, num_items: int, hidden_layers: int = 3, hidden_features: int = 64,
-                 data_means: float = 0.0):
+                 data_means: float = 0.0, n_components: int = 0):
         """
         Simple fully connected MLP to assign rescued food to kitchens
         :param num_kitchens: Number of kitchens
@@ -28,7 +28,10 @@ class SimpleMLP(Module):
         self.data_means = data_means
 
         # input consists of inventory for each kitchen plus food item to distribute
-        input_dim = (num_kitchens + 1) * num_items
+        if n_components == 0:
+            input_dim = (num_kitchens + 1) * num_items
+        else:
+            input_dim = n_components
 
         self.net = []
 
