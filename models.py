@@ -14,7 +14,8 @@ from tqdm import tqdm
 
 class SimpleMLP(Module):
     def __init__(self, num_kitchens: int, num_items: int, hidden_layers: int = 3, hidden_features: int = 64,
-                 data_means: float = 0.0, n_components: int = 0):
+                 data_means: float = 0.0, n_components: int = 0,
+                 data_max: torch.Tensor = None, data_min: torch.Tensor = None):
         """
         Simple fully connected MLP to assign rescued food to kitchens
         :param num_kitchens: Number of kitchens
@@ -22,10 +23,16 @@ class SimpleMLP(Module):
         :param hidden_layers: Number of hidden layers
         :param hidden_features: Number of hidden features
         :param data_means: Means of data, obtained from training data and saved for inference
+        :param data_max: Maxima of data, obtained from training data and saved for inference
+        :param data_min: Minima of data, obtained from training data and saved for inference
         """
         super(SimpleMLP, self).__init__()
 
         self.data_means = data_means
+        self.data_max = data_max
+        self.data_min = data_min
+        self.data_range = data_max - data_min
+        self.data_range[self.data_range == 0] = 1.0
 
         # input consists of inventory for each kitchen plus food item to distribute
         if n_components == 0:
@@ -62,6 +69,11 @@ class SimpleMLP(Module):
         """
         current_batch_size = x.shape[0]
         if center_data:
-            x = x - self.data_means
+            #x = x - self.data_means
+            assert self.data_max is not None
+            assert self.data_min is not None
+
+            x = (x - self.data_min) / self.data_range
+            x = (x - 0.5) * 2.0
         return self.net(x.reshape(current_batch_size, -1))
 
