@@ -1,9 +1,24 @@
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from sklearn.decomposition import TruncatedSVD
+#from sklearn.decomposition import TruncatedSVD
 
 import json
+
+
+def normalize_data(data: torch.Tensor):
+    """
+    Normalize input data. If the data range is 0, the value is set to -1.
+    :param data: Input data to normalize
+    :return: Normalized data, maximum values, min values
+    """
+    maxima = torch.max(data, dim=0)[0]
+    minima = torch.min(data, dim=0)[0]
+    data_range = (maxima - minima)
+    data_range[data_range == 0] = 1.0
+    normalized_data = (data - minima) / data_range
+    normalized_data = (normalized_data - 0.5) * 2.0
+    return normalized_data, maxima, minima
 
 
 class KitchenDataset(Dataset):
@@ -32,10 +47,10 @@ class KitchenDataset(Dataset):
         # one entry consists of current setting for kitchens and food item to distribute
         # dimensions: [N, (num_kitchens + 1), num_items]
         self.food_data = torch.from_numpy(np.array(data[food_tag])[:num_examples]).type(torch.float32)
-        self.food_means = torch.mean(self.food_data, dim=0)
+        #self.food_means = torch.mean(self.food_data, dim=0)
 
         if train != 'test':
-            self.food_data = (self.food_data - self.food_means)
+            self.food_data, self.data_max, self.data_min = normalize_data(self.food_data)
 
         # load ground truth
         # consists of one hot vectors with entries for each kitchen
@@ -56,10 +71,14 @@ class KitchenDataset(Dataset):
     def __getitem__(self, idx):
         return self.food_data[idx], self.assignments[idx]
 
+    def get_max_min(self):
+        return self.data_max, self.data_min
+
     def get_food_means(self):
-        return self.food_means
+        return 0 #self.food_means
 
 
+'''
 class KitchenDatasetSVD(Dataset):
     def __init__(self, data_path, n_components: int = 30):
         self.data_path = data_path
@@ -100,6 +119,7 @@ class KitchenDatasetSVD(Dataset):
 
     def get_svd(self):
         return self.svd
+'''
 
 
 def split_and_save_data(data_path, destination, shuffle: bool = True):
@@ -149,6 +169,13 @@ class KitchenDatasetNumpy(Dataset):
             print(f'loaded {len(self.assignments)} test assignments from {data_path + "_y_test.npy"}')
 
         self.food_data = torch.from_numpy(self.food_data).type(torch.float32)
+
+        if train is True:
+            self.food_data, self.maxima, self.minima = normalize_data(self.food_data)
+        else:
+            self.maxima = 1
+            self.minima = 0
+
         self.assignments = torch.from_numpy(self.assignments).type(torch.float32)
 
         self.num_kitchens = self.assignments.shape[-1]
@@ -159,3 +186,6 @@ class KitchenDatasetNumpy(Dataset):
 
     def __getitem__(self, idx):
         return self.food_data[idx], self.assignments[idx]
+
+    def get_max_min(self):
+        return self.maxima, self.minima
