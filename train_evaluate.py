@@ -22,7 +22,7 @@ def get_device() -> torch.device:
     return torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
 
 
-def initialize_model(num_kitchens: int, num_items: int, data_means: torch.Tensor,
+def initialize_model(num_kitchens: int, num_items: int, data_max: torch.Tensor, data_min: torch.Tensor,
                      hidden_layers: int = 1, hidden_features: int = 64,
                      device: torch.device = 'cpu') -> SimpleMLP:
     """
@@ -39,7 +39,8 @@ def initialize_model(num_kitchens: int, num_items: int, data_means: torch.Tensor
                       num_items=num_items,
                       hidden_layers=hidden_layers,
                       hidden_features=hidden_features,
-                      data_means=data_means).to(device)
+                      data_max=data_max,
+                      data_min=data_min).to(device)
     return model
 
 
@@ -61,25 +62,25 @@ def train_model(data_path: str, lr: float = 0.0008, batch_size: int = 512, num_e
     device = get_device()
 
     # get full dataset
-    kitchen_dataset = KitchenDataset(data_path)
-    food_means = kitchen_dataset.get_food_means()
+    train_data = KitchenDataset(data_path, train='train')
+    test_data = KitchenDataset(data_path, train='test')
 
     # split data into training and test data
-    num_kitchens = kitchen_dataset.num_kitchens
-    num_items = kitchen_dataset.num_items
-    num_training_examples = int(0.8 * len(kitchen_dataset))
-    num_test_examples = len(kitchen_dataset) - num_training_examples
-
-    train_data, test_data = torch.utils.data.random_split(kitchen_dataset, [num_training_examples, num_test_examples])
+    num_kitchens = train_data.num_kitchens
+    num_items = train_data.num_items
+    num_training_examples = len(train_data)
+    num_test_examples = len(test_data)
 
     # setup data loaders
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     # initialize optimizer
+    data_max, data_min = train_data.get_max_min()
     model = initialize_model(num_kitchens=num_kitchens,
                              num_items=num_items,
-                             data_means=food_means,
+                             data_max=data_max,
+                             data_min=data_min,
                              hidden_layers=hidden_layers,
                              hidden_features=hidden_features,
                              device=device)
@@ -127,7 +128,7 @@ def train_model(data_path: str, lr: float = 0.0008, batch_size: int = 512, num_e
             # iterate through test set
             for _, (data, targets) in enumerate(iter(test_loader)):
                 data, targets = data.to(device), targets.to(device)
-                prediction = model(data)
+                prediction = model(data, center_data=True)
                 test_loss += criterion(prediction, targets, reduction='sum')
                 test_predictions.append(prediction)
                 true_labels.append(targets)
