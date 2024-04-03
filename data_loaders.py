@@ -22,12 +22,10 @@ def normalize_data(data: torch.Tensor):
 
 
 class KitchenDataset(Dataset):
-    def __init__(self, data_path, num_examples: int = None, train: str = ''):
+    def __init__(self, data_path: list, num_examples: int = None, train: str = ''):
+        if isinstance(data_path, str):
+            data_path = [data_path]
         self.data_path = data_path
-
-        # read json data
-        f = open(data_path)
-        data = json.load(f)
 
         if train == 'train':
             food_tag = 'food_data_train'
@@ -39,23 +37,54 @@ class KitchenDataset(Dataset):
             food_tag = 'food_data'
             kitchen_tag = 'kitchens_data'
 
-        N = len(data[food_tag])
+        food_data_list = []
+        assignments_list = []
+        for i, dp in enumerate(data_path):
+            # read json data
+            f = open(dp)
+            data = json.load(f)
+
+            print(f'loaded {len(data[food_tag])} examples from {dp}')
+
+            # load input data
+            # one entry consists of current setting for kitchens and food item to distribute
+            # dimensions: [N, (num_kitchens + 1), num_items]
+            tmp_food_data = torch.from_numpy(np.array(data[food_tag])).type(torch.float32)
+
+            # load ground truth
+            # consists of one hot vectors with entries for each kitchen
+            # dimensions: [N, num_kitchens]
+            tmp_assignments = torch.from_numpy(np.array(data[kitchen_tag])).type(torch.float32)
+
+            food_data_list.append(tmp_food_data)
+            assignments_list.append(tmp_assignments)
+
+        if len(food_data_list) == 1:
+            self.food_data = food_data_list[0]
+            self.assignments = assignments_list[0]
+        else:
+            self.food_data = torch.cat(food_data_list)
+            self.assignments = torch.cat(assignments_list)
+
+        # if not all data is used, we shuffle the data before selecting the desired number of examples
+        # this way the data should contain examples from all loaded files
+        N = len(self.food_data)
         if num_examples is None or num_examples > N:
             num_examples = N
+            shuffled_indices = np.arange(N)
+        else:
+            shuffled_indices = np.random.permutation(N)
 
-        # load input data
-        # one entry consists of current setting for kitchens and food item to distribute
-        # dimensions: [N, (num_kitchens + 1), num_items]
-        self.food_data = torch.from_numpy(np.array(data[food_tag])[:num_examples]).type(torch.float32)
+        self.food_data = self.food_data[shuffled_indices[:num_examples]]
+        self.assignments = self.assignments[shuffled_indices[:num_examples]]
+
+        #self.food_data = torch.from_numpy(np.array(data[food_tag])[:num_examples]).type(torch.float32)
         #self.food_means = torch.mean(self.food_data, dim=0)
 
         if train != 'test':
             self.food_data, self.data_max, self.data_min = normalize_data(self.food_data)
 
-        # load ground truth
-        # consists of one hot vectors with entries for each kitchen
-        # dimensions: [N, num_kitchens]
-        self.assignments = torch.from_numpy(np.array(data[kitchen_tag])[:num_examples]).type(torch.float32)
+        #self.assignments = torch.from_numpy(np.array(data[kitchen_tag])[:num_examples]).type(torch.float32)
 
         self.num_kitchens = self.assignments.shape[-1]
         self.num_items = self.food_data.shape[-1]
