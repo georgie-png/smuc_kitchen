@@ -28,15 +28,24 @@ def get_list_of_models() -> list[str]:
 
 def train_model(data_paths: list, lr: float = 1e-4, epochs: int = 100, layers: list = [16, 6, 16],
                 model_type: str = 'default') -> tuple[nn.Module, Summary]:
+    """
+    Train a simple MLP on given data
+    :param data_paths: List of json files containing training and test data
+    :param lr: Learning rate. Default is 1e-4
+    :param epochs: Number of epochs. Default is 100
+    :param layers: List of layers. Every entry of the list is the number of features in the corrensponding layer
+    :param model_type: Model architecture. Currently only the default fully connected MLP is supported
+    :return: Trained model and summary object
+    """
     current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
     device = get_device()
 
     # Additional hyperparameters
     batch_size = 512
-    num_training_examples = 1000
+    #num_training_examples = 1000
 
     # load dataset
-    train_data = KitchenDataset(data_paths, train='train', num_examples=num_training_examples)
+    train_data = KitchenDataset(data_paths, train='train') #, num_examples=num_training_examples)
     test_data = KitchenDataset(data_paths, train='test')
 
     print(f'Total number of training examples: {len(train_data)}')
@@ -69,7 +78,7 @@ def train_model(data_paths: list, lr: float = 1e-4, epochs: int = 100, layers: l
     print(f'Start training')
     print(f'Device: {device}')
     print(f'Number of epochs: {epochs}')
-    print(f'Number of training examples: {num_training_examples}')
+    print(f'Number of training examples: {len(train_data)}')
     print('=' * 32)
 
     losses = []
@@ -142,7 +151,7 @@ def train_model(data_paths: list, lr: float = 1e-4, epochs: int = 100, layers: l
         model=model,
         optimizer=optim,
         datetime=current_date,
-        num_training_examples=num_training_examples,
+        num_training_examples=len(train_data),
         epochs=epochs,
         lr=lr,
         batch_size=batch_size,
