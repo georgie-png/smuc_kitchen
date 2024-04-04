@@ -36,5 +36,5 @@ def load_model_and_optimizer(path: str) -> tuple[torch.nn.Module, torch.optim.Op
     summary = load_summary(path)
     model = summary.model
     optimizer = torch.optim.Adam(params=model.parameters())
-    optimizer.load_state_dict(summary.optimizer.state_dict())
+    optimizer.load_state_dict(summary.optimizer)
     return model, optimizer, summary
