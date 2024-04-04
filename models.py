@@ -100,6 +100,26 @@ class MLPVariableLayers(KitchenNet):
         self.net = nn.Sequential(*self.net)
 
 
+class SimplestMLP(KitchenNet):
+    def __init__(self, num_kitchens: int, num_items: int, hidden_features: list = [64],
+                 data_max: torch.Tensor = None, data_min: torch.Tensor = None):
+        super().__init__(num_kitchens, num_items, data_max, data_min)
+
+        self.input_dim = (num_kitchens + 1) * num_items
+        temp_input_dim = self.input_dim
+
+        for i, hidden_dim in enumerate(hidden_features):
+            self.net.append(nn.Linear(temp_input_dim, hidden_dim))
+            self.net.append(nn.ReLU())
+            temp_input_dim = hidden_dim
+
+        # final output layer
+        self.net.append(nn.Linear(hidden_dim, num_kitchens))
+        self.net.append(nn.Softmax(dim=1))
+
+        self.net = nn.Sequential(*self.net)
+
+
 class CustomBatchNorm(nn.Module):
     def __init__(self, num_inputs: int, hidden_features: int):
         super(CustomBatchNorm, self).__init__()

@@ -10,7 +10,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from models import SimpleMLP, MLPVariableLayers
+from models import SimpleMLP, MLPVariableLayers, SimplestMLP
 from data_loaders import KitchenDataset
 
 from utils.summary import Summary
@@ -23,7 +23,7 @@ def get_list_of_models() -> list[str]:
     Returns a list of available model architectures that can be trained with train_model
     :return: list of available model architectures
     """
-    return ['default']
+    return ['default', 'MLP_batch_norm']
 
 
 def train_model(data_paths: list, lr: float = 1e-4, epochs: int = 100, layers: list = [16, 6, 16],
@@ -60,6 +60,18 @@ def train_model(data_paths: list, lr: float = 1e-4, epochs: int = 100, layers: l
 
     # initialize model
     if model_type == 'default':
+        '''
+        Default. Fully connected MLP without any batch norm or dropout.
+        '''
+        model = SimplestMLP(num_kitchens=train_data.num_kitchens,
+                            num_items=train_data.num_items,
+                            hidden_features=layers,
+                            data_max=data_max,
+                            data_min=data_min).to(device)
+    elif model_type == 'MLP_batch_norm':
+        '''
+        Fully connected MLP with batch norm before ReLU.
+        '''
         model = MLPVariableLayers(num_kitchens=train_data.num_kitchens,
                                   num_items=train_data.num_items,
                                   hidden_features=layers,
