@@ -11,13 +11,13 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 import utils.save_load
-from models import SimpleMLP, MLPVariableLayers, SimplestMLP
-from data_loaders import KitchenDataset
+from smuc_kitchen.models import SimpleMLP, MLPVariableLayers, SimplestMLP
+from smuc_kitchen.data_loaders import KitchenDataset
 
-from utils.summary import Summary
-from utils.metrics import compute_accuracy
-from utils.get_device import get_device
-from utils.save_load import load_model_and_optimizer
+from smuc_kitchen.utils.summary import Summary
+from smuc_kitchen.utils.metrics import compute_accuracy
+from smuc_kitchen.utils.get_device import get_device
+from smuc_kitchen.utils.save_load import load_model_and_optimizer
 
 
 def get_list_of_models() -> list[str]:

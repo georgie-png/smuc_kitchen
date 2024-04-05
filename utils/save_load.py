@@ -1,6 +1,6 @@
 import torch
 
-from utils.summary import Summary
+from smuc_kitchen.utils.summary import Summary
 
 
 def save_summary(path: str, summary: Summary):

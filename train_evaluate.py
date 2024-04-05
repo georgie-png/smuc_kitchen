@@ -10,8 +10,8 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from models import SimpleMLP
-from data_loaders import KitchenDataset
+from smuc_kitchen.models import SimpleMLP
+from smuc_kitchen.data_loaders import KitchenDataset
 
 
 def get_device() -> torch.device:
