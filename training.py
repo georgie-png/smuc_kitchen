@@ -10,7 +10,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-import utils.save_load
+import smuc_kitchen.utils.save_load
 from smuc_kitchen.models import SimpleMLP, MLPVariableLayers, SimplestMLP
 from smuc_kitchen.data_loaders import KitchenDataset
 
